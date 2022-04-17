@@ -1,5 +1,5 @@
 
-import {useEffect, useState, setState} from 'react'
+import {useEffect, useState} from 'react'
 import * as React from "react"
 import './App.css'
 import kaboom from "kaboom"
@@ -9,7 +9,13 @@ import ItemToken from './abis/ItemToken.json'
 
 const App = () => {
 
-  const [address, setAddress] = useState(null)
+  const [account, setAccount] = useState(null)
+  const [token, setToken] = useState(null)
+  const [totalSupply, setTotalSupply] = useState(null)
+  const [name, setName] = useState(null)
+  const [tokenURIs, setTokenURIs] = useState([])
+  const [count, setCount] = useState(0)
+
 
   const loadWeb3 = async () => {
     if (window.ethereum) {
@@ -28,7 +34,35 @@ const App = () => {
     const web3 = window.web3
     const accounts = await web3.eth.getAccounts()
     console.log("account", accounts[0])
-    setAddress(accounts[0])
+    setAccount(accounts[0])
+
+    // Load smart contract
+    const networkId = await web3.eth.net.getId()
+
+    const networkData = ItemToken.networks[networkId]
+    if(networkData) {
+      const abi = ItemToken.abi
+      const address = networkData.address
+      const token = new web3.eth.Contract(abi, address)
+      setToken(token)
+      const totalSupply = await token.methods.totalSupply().call()
+      const name = await token.methods.name().call()
+      setTotalSupply(totalSupply)
+      setName(name)
+
+
+      let balanceOf = await token.methods.balanceOf(accounts[0]).call()
+      for (let i = 0; i < balanceOf; i++) {
+        let id = await token.methods.tokenOfOwnerByIndex(accounts[0], i).call()
+        let tokenURI = await token.methods.tokenURI(id).call()
+
+        setTokenURIs(tokenURIs => [...tokenURIs,tokenURI])
+      }
+
+    }
+    else{
+          alert('Smart contract not deployed to network')
+    }
 
     }
 
@@ -37,14 +71,17 @@ const App = () => {
       await loadBlockchainData()
     }
 
+
   useEffect(() => {
 
     remote()
 
+    if (account != null && name != null) {
+
     const k = kaboom({
-      global: false,
-      width: 500,
-      height: 500,
+      global: true,
+      width: 600,
+      height: 600,
       scale: 1,
       debug: true,
       //background: [0, 0, 0, 1],
@@ -130,7 +167,7 @@ const App = () => {
       k.add([k.sprite('bg'), k.layer('bg')])
 
       const scoreLabel = k.add([
-        k.text('0'),
+        k.text(score),
         k.pos(400,450),
         k.layer('ui'),
         {
@@ -151,12 +188,28 @@ const App = () => {
       ])
 
       player.onCollide('next-level', () =>{
+        console.log(account)
+        console.log(name)
+        console.log(totalSupply)
+        setCount(prevCount => prevCount + 1)
+        console.log(count)
+        token.methods.mint(
+          account,
+          'https://golden-storage-production.s3.amazonaws.com/topic_images/6861ca1121e24652a45644fc1a29f546.png'
+        )
+        .send({ from: account })
+        .on('transactionHash', (hash) => {
+
+          setTokenURIs(tokenURIs => [...tokenURIs, 'https://golden-storage-production.s3.amazonaws.com/topic_images/6861ca1121e24652a45644fc1a29f546.png'])
+        })
+
+
       k.go("game", {
         level: (level +1) % maps.length,
-        score: scoreLabel.value,
+        score: scoreLabel.text,
       })
 
-      console.log('collide')
+
       })
 
       k.onKeyDown('left', () => {
@@ -165,6 +218,8 @@ const App = () => {
         )
         player.move(-MOVE_SPEED, 0)
         player.dir = k.vec2(-1, 0)
+        scoreLabel.value++
+        scoreLabel.text = scoreLabel.value
       })
       k.onKeyDown('right', () => {
         player.use(
@@ -193,10 +248,10 @@ const App = () => {
 
 
   k.go('game', { level: 0, score: 0 })
-  
-  }, [])
 
+}
 
+},[account, name])
 
 
 
@@ -204,7 +259,17 @@ const App = () => {
 
   return (
     <div>
-      {address}
+
+      <div>
+      {tokenURIs.map((tokenURI, key) => (
+        <img src={tokenURI} key={key} data-id={key} width="40px"/>
+      ))}
+
+      {tokenURIs.length}
+        {account} {name} {totalSupply}
+      </div>
+
+
     </div>
   );
 }
