@@ -9,12 +9,20 @@ import ItemToken from './abis/ItemToken.json'
 
 const App = () => {
 
+  const URIs =
+  [
+    'https://lh3.googleusercontent.com/0SwciFLyAuGgzErn1PpX2McVwZ5xQsRBI7IFQWK6P1NEMGU-8GZstqiQp9tbmycTtaRrZYk_ACt3KS4LXx67cD0sidN33L6oYP5wtB8=w600',
+    'https://lh3.googleusercontent.com/arSVhhGd5iVjpxlXdeehmv7RfTjdH70oR0zUbbkGEYxTnO2ZXUzpG-2T38UPkxLKyG_vnltfm3_d9zZkUipDgpMLmUyzMlzvo8GauQ=w600',
+    'https://lh3.googleusercontent.com/G8go8E549butw9mkI7L-y3Y7senwbApmitQKUHQ8G2wewSp_XRKHhwQasuxBOyD6NFCVuX7PpTGgaM2KBTWEWT7ZO69AESuDJ3m4pA=w600',
+    'https://lh3.googleusercontent.com/jY3UkYH6v9OvQmTs7Fgv06DXB7IxEE1OO898p9XbB5cUlTAIML2QeUCFMOZajf-kWbtyXMM4rFKYAJoKHfShPSJPl9T7qenORAq9=w600'
+  ]
   const [account, setAccount] = useState(null)
   const [token, setToken] = useState(null)
   const [totalSupply, setTotalSupply] = useState(null)
   const [name, setName] = useState(null)
   const [tokenURIs, setTokenURIs] = useState([])
   const [count, setCount] = useState(0)
+  const [check, setCheck] = useState(null)
 
 
   const loadWeb3 = async () => {
@@ -56,7 +64,9 @@ const App = () => {
         let id = await token.methods.tokenOfOwnerByIndex(accounts[0], i).call()
         let tokenURI = await token.methods.tokenURI(id).call()
 
-        setTokenURIs(tokenURIs => [...tokenURIs,tokenURI])
+        setCheck(i)
+
+        setTokenURIs(tokenURIs => [...tokenURIs, tokenURI])
       }
 
     }
@@ -71,10 +81,24 @@ const App = () => {
       await loadBlockchainData()
     }
 
+    const mint_nft = () => {
+    let numberNFT = Math.floor(Math.random() * 4)
+    setCount(count => count + 1)
+    token.methods.mint(
+      account,
+      URIs[numberNFT]
+    )
+    .send({ from: account })
+    .on('transactionHash', (hash) => {
+
+      setTokenURIs(tokenURIs => [...tokenURIs, URIs[numberNFT]])
+
+    })
+}
 
   useEffect(() => {
 
-    remote()
+
 
     if (account != null && name != null) {
 
@@ -188,20 +212,11 @@ const App = () => {
       ])
 
       player.onCollide('next-level', () =>{
-        console.log(account)
-        console.log(name)
-        console.log(totalSupply)
-        setCount(prevCount => prevCount + 1)
-        console.log(count)
-        token.methods.mint(
-          account,
-          'https://golden-storage-production.s3.amazonaws.com/topic_images/6861ca1121e24652a45644fc1a29f546.png'
-        )
-        .send({ from: account })
-        .on('transactionHash', (hash) => {
-
-          setTokenURIs(tokenURIs => [...tokenURIs, 'https://golden-storage-production.s3.amazonaws.com/topic_images/6861ca1121e24652a45644fc1a29f546.png'])
-        })
+        //console.log(account)
+        //console.log(name)
+        //console.log(totalSupply)
+        mint_nft()
+        //console.log("count: " + count);
 
 
       k.go("game", {
@@ -251,7 +266,12 @@ const App = () => {
 
 }
 
-},[account, name])
+},[name])
+
+
+useEffect(() => {
+  remote()
+},[])
 
 
 
@@ -261,12 +281,12 @@ const App = () => {
     <div>
 
       <div>
+
       {tokenURIs.map((tokenURI, key) => (
         <img src={tokenURI} key={key} data-id={key} width="40px"/>
       ))}
 
-      {tokenURIs.length}
-        {account} {name} {totalSupply}
+      {tokenURIs.length} {account} {name} {totalSupply} count({count})
       </div>
 
 
