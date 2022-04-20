@@ -9,20 +9,18 @@ import ItemToken from './abis/ItemToken.json'
 
 const App = () => {
 
-  const URIs =
+  const uris =
   [
-    'https://lh3.googleusercontent.com/0SwciFLyAuGgzErn1PpX2McVwZ5xQsRBI7IFQWK6P1NEMGU-8GZstqiQp9tbmycTtaRrZYk_ACt3KS4LXx67cD0sidN33L6oYP5wtB8=w600',
-    'https://lh3.googleusercontent.com/arSVhhGd5iVjpxlXdeehmv7RfTjdH70oR0zUbbkGEYxTnO2ZXUzpG-2T38UPkxLKyG_vnltfm3_d9zZkUipDgpMLmUyzMlzvo8GauQ=w600',
-    'https://lh3.googleusercontent.com/G8go8E549butw9mkI7L-y3Y7senwbApmitQKUHQ8G2wewSp_XRKHhwQasuxBOyD6NFCVuX7PpTGgaM2KBTWEWT7ZO69AESuDJ3m4pA=w600',
-    'https://lh3.googleusercontent.com/jY3UkYH6v9OvQmTs7Fgv06DXB7IxEE1OO898p9XbB5cUlTAIML2QeUCFMOZajf-kWbtyXMM4rFKYAJoKHfShPSJPl9T7qenORAq9=w600'
+    'https://i.imgur.com/eU4Ww4q.png',
+    'https://i.imgur.com/cA6vwIw.png',
   ]
+
   const [account, setAccount] = useState(null)
   const [token, setToken] = useState(null)
   const [totalSupply, setTotalSupply] = useState(null)
   const [name, setName] = useState(null)
   const [tokenURIs, setTokenURIs] = useState([])
   const [count, setCount] = useState(0)
-  const [check, setCheck] = useState(null)
 
 
   const loadWeb3 = async () => {
@@ -56,18 +54,16 @@ const App = () => {
       const totalSupply = await token.methods.totalSupply().call()
       const name = await token.methods.name().call()
       setTotalSupply(totalSupply)
-      setName(name)
-
 
       let balanceOf = await token.methods.balanceOf(accounts[0]).call()
       for (let i = 0; i < balanceOf; i++) {
         let id = await token.methods.tokenOfOwnerByIndex(accounts[0], i).call()
         let tokenURI = await token.methods.tokenURI(id).call()
 
-        setCheck(i)
-
         setTokenURIs(tokenURIs => [...tokenURIs, tokenURI])
       }
+
+      await setName(name)
 
     }
     else{
@@ -81,59 +77,78 @@ const App = () => {
       await loadBlockchainData()
     }
 
-    const mint_nft = () => {
-    let numberNFT = Math.floor(Math.random() * 4)
+    const mint_nft = (_numberNFT) => {
+    //let numberNFT = Math.floor(Math.random() * URIs.length)
     setCount(count => count + 1)
     token.methods.mint(
       account,
-      URIs[numberNFT]
+      uris[_numberNFT]
     )
     .send({ from: account })
     .on('transactionHash', (hash) => {
 
-      setTokenURIs(tokenURIs => [...tokenURIs, URIs[numberNFT]])
+      setTokenURIs(tokenURIs => [...tokenURIs, uris[_numberNFT]])
+
 
     })
 }
 
   useEffect(() => {
 
-
-
     if (account != null && name != null) {
+
+    console.log(tokenURIs)
 
     const k = kaboom({
       global: true,
-      width: 600,
-      height: 600,
+      width: 528,
+      height: 576,
       scale: 1,
       debug: true,
-      //background: [0, 0, 0, 1],
+      background: [0, 0, 0, 1],
     })
-    const MOVE_SPEED = 120
+
+    let thisGameNFTs = []
+
+    k.loadSound('soundtrack', './sounds/forever.mp3')
+    k.loadSound('explosion', './sounds/explosion.mp3')
+    k.loadSound('chest-open', './sounds/chest_open.mp3')
 
     k.loadRoot('https://i.imgur.com/')
-    k.loadSprite('link-going-left', '1Xq9biB.png')
-    k.loadSprite('link-going-right', 'yZIb8O2.png')
-    k.loadSprite('link-going-down', 'tVtlP6y.png')
-    k.loadSprite('link-going-up', 'UkV0we0.png')
-    k.loadSprite('left-wall', 'rfDoaa1.png')
-    k.loadSprite('top-wall', 'QA257Bj.png')
-    k.loadSprite('bottom-wall', 'vWJWmvb.png')
-    k.loadSprite('right-wall', 'SmHhgUn.png')
-    k.loadSprite('bottom-left-wall', 'awnTfNC.png')
-    k.loadSprite('bottom-right-wall', '84oyTFy.png')
-    k.loadSprite('top-left-wall', 'xlpUxIm.png')
-    k.loadSprite('top-right-wall', 'z0OmBd1.jpg')
-    k.loadSprite('top-door', 'U9nre4n.png')
-    k.loadSprite('fire-pot', 'I7xSp7w.png')
-    k.loadSprite('left-door', 'okdJNls.png')
-    k.loadSprite('lanterns', 'wiSiY09.png')
-    k.loadSprite('slicer', 'c6JFi5Z.png')
-    k.loadSprite('skeletor', 'Ei1VnX8.png')
+    k.loadSprite('player-left', 'pPVBL7J.png')
+    k.loadSprite('player-right', 'hI9GDGw.png')
+    k.loadSprite('player-down', 'ftihTbH.png')
+    k.loadSprite('player-up', 'pZqjg0n.png')
+    k.loadSprite('left-wall', 'h9n6MIc.png')
+    k.loadSprite('top-wall', '6lIeFmb.png')
+    k.loadSprite('bottom-wall', '6lIeFmb.png')
+    k.loadSprite('right-wall', 'aRkFWGk.png')
+    k.loadSprite('bottom-left-wall', 'FD4OV5s.png')
+    k.loadSprite('bottom-right-wall', 'SWumN86.png')
+    k.loadSprite('top-left-wall', 'q33puFy.png')
+    k.loadSprite('top-right-wall', 'QcPWqbe.png')
+    k.loadSprite('top-door', 'gLssH5h.png')
+    k.loadSprite('lava-tile', 'nHhAWLn.png')
+    k.loadSprite('torch-tile', '8jNYA6F.png')
+    k.loadSprite('left-stairs', 'PKPSZp2.png')
+    k.loadSprite('up-torch', 'FQrRYdg.png')
+    k.loadSprite('left-torch', 'CZHf5o6.png')
+    k.loadSprite('right-torch', 'tApKS22.png')
+    k.loadSprite('ghost', '0MGVEwZ.png')
+    k.loadSprite('ghost-right', 'ysbpe2o.png')
+    k.loadSprite('wanderer', 'CBxQtFS.png')
+    k.loadSprite('wanderer-up', 'unFX5f9.png')
+    k.loadSprite('tornado', '6iSGfpL.png')
     k.loadSprite('kaboom', 'o9WizfI.png')
-    k.loadSprite('stairs', 'VghkL08.png')
-    k.loadSprite('bg', 'u4DVsx6.png')
+    k.loadSprite('stairs', 'bC3dBbM.png')
+    k.loadSprite('chest-closed', '5tdiIIx.png')
+    k.loadSprite('chest-opened', 'WliBmsB.png')
+    k.loadSprite('bg', 'VxMUetX.png')
+
+    k.play("soundtrack", {
+        volume: 0.8,
+        loop: true
+    })
 
     k.scene("game", ({ level, score }) => {
 
@@ -141,26 +156,26 @@ const App = () => {
 
       const maps = [
        [
-         'ycc)cc^ccw',
-         'a        b',
-         'a      * b',
-         'a    (   b',
-         '%        b',
-         'a    (   b',
-         'a   *    b',
-         'a        b',
-         'xdd)dd)ddz',
+         'yc)ccc^c)cw',
+         'a         b',
+         'a      *  b',
+         'a   (     b',
+         '%         b',
+         'a     (   b',
+         'a  ( *    b',
+         'a         b',
+         'xd)ddddd)dz',
        ],
        [
-         'yccccccccw',
-         'a        b',
-         ')        )',
-         'a        b',
-         'a        b',
-         'a    $   b',
-         ')   }    )',
-         'a        b',
-         'xddddddddz',
+         'ycccccccccw',
+         'a       e b',
+         '<         >',
+         'a         b',
+         'a         b',
+         'a    $    b',
+         '<   }     >',
+         'a         b',
+         'xdddddddddz',
        ],
      ]
 
@@ -176,35 +191,40 @@ const App = () => {
         'x': ()  => [k.sprite('bottom-left-wall'), k.area(), k.solid(), 'wall'],
         'y': ()  => [k.sprite('top-left-wall'), k.area(), k.solid(), 'wall'],
         'z': ()  => [k.sprite('bottom-right-wall'), k.area(), k.solid(), 'wall'],
-        '%': ()  => [k.sprite('left-door'), k.area(), k.solid(), 'door'],
+        '%': ()  => [k.sprite('left-stairs'), k.area(), k.solid(), 'door'],
         '^': ()  => [k.sprite('top-door'), k.area(), 'next-level' ],
         '$': ()  => [k.sprite('stairs'), k.area(), 'next-level' ],
-        '*': ()  => [k.sprite('slicer'), k.area(), 'slicer', 'dangerous', { dir: -1} ],
-        '}': ()  => [k.sprite('skeletor'), k.area(), 'skeletor', 'dangerous', { dir: -1, timer: 0 } ],
-        ')': ()  => [k.sprite('lanterns'), k.area(), k.solid()],
-        '(': ()  => [k.sprite('fire-pot'), k.area(), k.solid()],
-
-
+        '*': ()  => [k.sprite('ghost'), k.area(), 'ghost', 'dangerous', { dir: -1} ],
+        '}': ()  => [k.sprite('wanderer'), k.area(), 'wanderer', 'dangerous', { dir: -1, timer: 0 } ],
+        ')': ()  => [k.sprite('up-torch'), k.area(), k.solid()],
+        '<': ()  => [k.sprite('left-torch'), k.area(), k.solid(), 'wall'],
+        '>': ()  => [k.sprite('right-torch'), k.area(), k.solid(), 'wall'],
+        '(': ()  => [k.sprite('torch-tile'), k.area(), k.solid()],
+        'e': ()  => [k.sprite('chest-closed'), k.area(), k.solid(), 'chest-closed'],
       }
-      k.addLevel(maps[level], levelCfg)
 
+      k.addLevel(maps[level], levelCfg)
       k.add([k.sprite('bg'), k.layer('bg')])
 
       const scoreLabel = k.add([
-        k.text(score),
-        k.pos(400,450),
+        k.text('score: ' + parseInt(score), {size: 30}),
+        k.pos(315,450),
         k.layer('ui'),
         {
           value: score,
         },
       ])
 
-      k.add([k.text('level ' + parseInt(level + 1)), k.pos(400,525)])
+      k.add([k.text('level: ' + parseInt(level + 1), {size: 30}), k.pos(315,500)])
+      k.add([k.text('NFT Game', {size: 45}), k.pos(55,490)])
+
+
+      let PLAYER_SPEED = 120
 
       const player = k.add([
-        k.sprite('link-going-right'),
+        k.sprite('player-right'),
         k.pos(5, 190),
-        k.area({ width: 46, height: 46 }),
+        k.area({ width: 44, height: 44 }),
         k.solid(),
         {
           dir: k.vec2(1,0),    //right by default
@@ -212,61 +232,151 @@ const App = () => {
       ])
 
       player.onCollide('next-level', () =>{
-        //console.log(account)
-        //console.log(name)
-        //console.log(totalSupply)
-        mint_nft()
-        //console.log("count: " + count);
 
-
-      k.go("game", {
-        level: (level +1) % maps.length,
-        score: scoreLabel.text,
+        k.go("game", {
+          level: (level +1) % maps.length,
+          score: scoreLabel.text,
+        })
       })
 
+      player.onCollide('chest-closed', (c) => {
 
+        const obj = k.add([
+            k.sprite("chest-opened"),
+            k.pos(c.pos),
+            'chest-opened',
+            k.area({ width: 48, height: 48 }),
+            k.solid(),
+          ])
+
+          let numberNFT = Math.floor(Math.random() * uris.length)
+          thisGameNFTs.push(uris[numberNFT])
+          console.log(thisGameNFTs)
+          mint_nft(numberNFT)
+
+          c.destroy()
+          k.play("chest-open", {volume: 0.4})
+          console.log('collide')
       })
 
       k.onKeyDown('left', () => {
         player.use(
-          k.sprite('link-going-left')
+          k.sprite('player-left')
         )
-        player.move(-MOVE_SPEED, 0)
+        player.move(-PLAYER_SPEED, 0)
         player.dir = k.vec2(-1, 0)
         scoreLabel.value++
         scoreLabel.text = scoreLabel.value
       })
+
       k.onKeyDown('right', () => {
         player.use(
-          k.sprite('link-going-right')
+          k.sprite('player-right')
         )
-        player.move(MOVE_SPEED, 0)
+        player.move(PLAYER_SPEED, 0)
         player.dir = k.vec2(1, 0)
       })
+
       k.onKeyDown('up', () => {
         player.use(
-          k.sprite('link-going-up')
+          k.sprite('player-up')
         )
-        player.move(0, -MOVE_SPEED)
+        player.move(0, -PLAYER_SPEED)
         player.dir = k.vec2(0,-1)
       })
+
       k.onKeyDown('down', () => {
         player.use(
-          k.sprite('link-going-down')
+          k.sprite('player-down')
         )
-        player.move(0, MOVE_SPEED)
+        player.move(0, PLAYER_SPEED)
         player.dir = k.vec2(0, 1)
       })
 
 
-    })
+      k.onKeyPress('s', () => {
+        if (tokenURIs.includes(uris[0]) || thisGameNFTs.includes(uris[0])){
+           PLAYER_SPEED = 270
+        }
+        else {
+          //pass
+        }
+      })
 
+      k.onKeyRelease('s', () => {
+        PLAYER_SPEED = 120
+      })
+
+      k.onKeyPress('space', () => {
+        spawnTornado(player.pos.add(player.dir.scale(48)))
+        k.play("explosion", {volume: 0.5})
+      })
+
+
+      function spawnTornado(p) {
+        const obj = k.add([k.sprite('tornado'), k.pos(p), 'tornado', k.area()])
+        k.wait(5, () => {
+            k.destroy(obj)
+        })
+      }
+
+
+        //Ghost MOB
+        const GHOST_SPEED = 150
+
+        k.onUpdate('ghost', (s) => {
+          s.move(s.dir * GHOST_SPEED, 0)
+        })
+
+        k.onCollide('ghost', 'wall', (s) => {
+          s.dir = -s.dir
+          if (s.dir > 0) {
+            s.use(k.sprite('ghost-right'))
+
+          }
+          else{
+            s.use(k.sprite('ghost'))
+          }
+
+        })
+
+
+        //Wanderer MOB
+        const WANDERER_SPEED = 60
+
+        k.onUpdate('wanderer', (s) => {
+          s.move(0, s.dir * WANDERER_SPEED)
+          s.timer -= k.dt()
+          if (s.timer <= 0) {
+            //spawnTornado(s)
+            s.dir = -s.dir
+
+            if (s.dir > 0) {
+              s.use(k.sprite('wanderer'))
+            }
+            else {
+              s.use(k.sprite('wanderer-up'))
+            }
+            s.timer = k.rand(5)
+          }
+        })
+
+        k.onCollide('wanderer', 'wall', (s) => {
+          s.dir = -s.dir
+
+          if (s.dir > 0) {
+            s.use(k.sprite('wanderer'))
+          }
+          else{
+            s.use(k.sprite('wanderer-up'))
+          }
+        })
+
+    })
 
   k.go('game', { level: 0, score: 0 })
 
-}
-
-},[name])
+}},[name])
 
 
 useEffect(() => {
@@ -274,24 +384,34 @@ useEffect(() => {
 },[])
 
 
-
-
-
+if (name == null) {
   return (
     <div>
-
-      <div>
-
-      {tokenURIs.map((tokenURI, key) => (
-        <img src={tokenURI} key={key} data-id={key} width="40px"/>
-      ))}
-
-      {tokenURIs.length} {account} {name} {totalSupply} count({count})
+      <div id="load-text">
+        <h1>Deploy Smart Contract and Log In</h1>
       </div>
-
-
+      <div id="load-emojis">
+        <h1>📝🗝️🔥</h1>
+      </div>
     </div>
-  );
+  );}
+  else{
+    return(
+      <div>
+          <nav>
+          <h3>Items:</h3>
+          {tokenURIs.map((tokenURI, key) => (
+            <img src={tokenURI} key={key} data-id={key} width="30px"/>
+          ))}
+          </nav>
+          <div id="info">
+          <h3>Address: </h3> <span>{account}</span>
+          <h3>Contract: </h3>  <span>{name}</span>
+          <h3>Total Supply: </h3>  <span>{totalSupply}</span>
+          </div>
+      </div>
+    )
+  }
 }
 
 export default App;
