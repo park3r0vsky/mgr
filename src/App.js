@@ -13,6 +13,8 @@ const App = () => {
     'https://i.imgur.com/eU4Ww4q.png',
     'https://i.imgur.com/cA6vwIw.png',
     'https://i.imgur.com/MzHoavD.png',
+    'https://i.imgur.com/Ju0rVFp.png',
+    'https://i.imgur.com/aVviGzf.png',
   ]
 
   const [account, setAccount] = useState(null)
@@ -71,10 +73,6 @@ const App = () => {
 
     }
 
-    const remote = async () => {
-      await loadWeb3()
-      await loadBlockchainData()
-    }
 
     const mint_nft = (_numberNFT) => {
     token.methods.mint(
@@ -107,6 +105,7 @@ const App = () => {
     })
 
     let thisGameNFTs = []
+    const luck = [true, false, false]
 
     k.loadSound('soundtrack', './sounds/forever.mp3')
     k.loadSound('explosion', './sounds/explosion.mp3')
@@ -128,7 +127,6 @@ const App = () => {
     k.loadSprite('left-torch', 'CZHf5o6.png')
     k.loadSprite('right-torch', 'tApKS22.png')
     k.loadSprite('up-torch', 'FQrRYdg.png')
-    //k.loadSprite('floor-tile', 'LUup1AG.png')
     k.loadSprite('lava-tile', 'nHhAWLn.png')
     k.loadSprite('torch-tile', '8jNYA6F.png')
     k.loadSprite('door-top', 'gLssH5h.png')
@@ -138,7 +136,10 @@ const App = () => {
     k.loadSprite('ghost-right', 'ysbpe2o.png')
     k.loadSprite('wanderer-down', 'CBxQtFS.png')
     k.loadSprite('wanderer-up', 'unFX5f9.png')
+    k.loadSprite('darkmage-left', 'uo5Nr1X.png')
+    k.loadSprite('darkmage-right', 'EgZpxUT.png')
     k.loadSprite('tornado', '6iSGfpL.png')
+    k.loadSprite('fire', 'vvZEtBj.png')
     k.loadSprite('charged-bolt', 'hsrj8Pg.png')
     k.loadSprite('stairs', 'bC3dBbM.png')
     k.loadSprite('chest-closed', '5tdiIIx.png')
@@ -171,7 +172,7 @@ const App = () => {
          'a       e b',
          '<         >',
          'a    }    b',
-         '%         b',
+         '%   @     b',
          'a         b',
          '<     $   >',
          'a         b',
@@ -182,10 +183,32 @@ const App = () => {
          'a       e b',
          '<   *     >',
          'a    } !  b',
-         '?   *     b',
+         '?         b',
          'a    ! }  b',
          '<  $      >',
          'a     *   b',
+         'ydddddddddz',
+       ],
+       [
+         'wcccccccccx',
+         'a     @  $b',
+         '<   *     >',
+         'a      @  b',
+         '?         b',
+         'a  * !    b',
+         '<         >',
+         'a   } *   b',
+         'ydddddddddz',
+       ],
+       [
+         'wcc^ccccccx',
+         'a     @   b',
+         '<         >',
+         'a      @  b',
+         '?         b',
+         'a  * ! }  b',
+         '<   @     >',
+         'a e   *   b',
          'ydddddddddz',
        ],
      ]
@@ -205,15 +228,16 @@ const App = () => {
         '<': ()  => [k.sprite('left-torch'), k.area(), k.solid(), 'wall'],
         '>': ()  => [k.sprite('right-torch'), k.area(), k.solid(), 'wall'],
         '?': ()  => [k.sprite('door-left'), k.area(), k.solid(), 'wall'],
-        '%': ()  => [k.sprite('left-stairs'), k.area(), k.solid(), 'door'],
-        '^': ()  => [k.sprite('door-top'), k.area(), 'next-level' ],
-        '$': ()  => [k.sprite('stairs'), k.area(), 'next-level' ],
+        '%': ()  => [k.sprite('left-stairs'), k.area(), k.solid(), 'wall', 'door'],
+        '^': ()  => [k.sprite('door-top'), k.area(), 'next-level'],
+        '$': ()  => [k.sprite('stairs'), k.area(), 'next-level'],
         ')': ()  => [k.sprite('up-torch'), k.area(), k.solid()],
         '(': ()  => [k.sprite('torch-tile'), k.area(), k.solid()],
         '!': ()  => [k.sprite('lava-tile'), k.area(), k.solid(), 'wall'],
         'e': ()  => [k.sprite('chest-closed'), k.area(), k.solid(), 'chest-closed'],
         '*': ()  => [k.sprite('ghost-left'), k.area(), 'ghost', 'mob', 'dangerous', { dir: -1} ],
         '}': ()  => [k.sprite('wanderer-down'), k.area(), 'wanderer', 'mob', 'dangerous', k.solid(), { dir: -1, timer: 0 } ],
+        '@': ()  => [k.sprite('darkmage-left'), k.area(), 'dark-mage', 'mob', 'dangerous',  { dir: -1, timer: 0 } ],
       }
 
       k.addLevel(maps[level], levelCfg)
@@ -233,6 +257,7 @@ const App = () => {
 
 
       let PLAYER_SPEED = 120
+      let manaCharged = true
 
       const player = k.add([
         k.sprite('player-right'),
@@ -306,8 +331,22 @@ const App = () => {
 
 
       k.onKeyPress('q', () => {
-        k.destroyAll("mob")
-        k.shake(6)
+
+        let isLuck = luck[Math.floor(Math.random() * luck.length)]
+
+        if(manaCharged && isLuck){
+          k.destroyAll("mob")
+          k.shake(6)
+          manaCharged = false
+
+          k.wait(5, () => {
+            console.log('timer3s')
+            manaCharged = true
+            })
+        }
+        else{
+          manaCharged = false
+        }
       })
 
       k.onKeyPress('s', () => {
@@ -353,6 +392,20 @@ const App = () => {
         ])
       }
 
+      function spawnFire(p) {
+        const obj = k.add([
+          k.sprite('fire'),
+          k.pos(p.pos),
+          'fire',
+          'dangerous',
+          k.area(),
+          k.move(p.dir),
+        ])
+        k.wait(2, () => {
+              k.destroy(obj)
+          })
+      }
+
 
       k.onCollide('player-attack', 'wall', (a,w) =>{
         k.shake(4)
@@ -396,7 +449,7 @@ const App = () => {
 
 
         //Wanderer MOB
-        const WANDERER_SPEED = 60
+        const WANDERER_SPEED = 50
         const TORNADO_SPEEDS = [150,-170,200,-120]
 
         k.onUpdate('wanderer', (w) => {
@@ -419,6 +472,9 @@ const App = () => {
           }
         })
 
+        const DARKMAGE_SPEED = 80
+
+
         k.onCollide('wanderer', 'wall', (w) => {
           w.dir = -w.dir
 
@@ -429,6 +485,39 @@ const App = () => {
             w.use(k.sprite('wanderer-up'))
           }
         })
+
+
+        k.onUpdate('dark-mage', (d) => {
+          d.move(d.dir * DARKMAGE_SPEED, 0)
+          d.timer -= k.dt()
+          if (d.timer <= 0) {
+            d.dir = -d.dir
+
+            if (d.dir > 0) {
+              d.use(k.sprite('darkmage-right'))
+
+            }
+            else {
+              d.use(k.sprite('darkmage-left'))
+
+            }
+            d.timer = k.rand(7)
+            spawnFire(d)
+          }
+        })
+
+
+        k.onCollide('dark-mage', 'wall', (w) => {
+          w.dir = -w.dir
+
+          if (w.dir > 0) {
+            w.use(k.sprite('darkmage-right'))
+          }
+          else{
+            w.use(k.sprite('darkmage-left'))
+          }
+        })
+
 
       player.onCollide('dangerous', () => {
         k.go('lose', {score : scoreLabel.value})
@@ -450,6 +539,12 @@ const App = () => {
 
 
 useEffect(() => {
+
+  const remote = async () => {
+    await loadWeb3()
+    await loadBlockchainData()
+  }
+
   remote()
 },[])
 
