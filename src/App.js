@@ -105,11 +105,14 @@ const App = () => {
     })
 
     let thisGameNFTs = []
-    const luck = [true, false, false]
+    const luck = [true, false]
 
     k.loadSound('soundtrack', './sounds/forever.mp3')
     k.loadSound('explosion', './sounds/explosion.mp3')
+    k.loadSound('nuke', './sounds/nuke.mp3')
     k.loadSound('chest-open', './sounds/chest_open.mp3')
+    k.loadSound('immunity-start', './sounds/immunity_start.mp3')
+    k.loadSound('immunity-stop', './sounds/immunity_stop.mp3')
 
     k.loadRoot('https://i.imgur.com/')
     k.loadSprite('player-left', 'pPVBL7J.png')
@@ -141,6 +144,7 @@ const App = () => {
     k.loadSprite('tornado', '6iSGfpL.png')
     k.loadSprite('fire', 'vvZEtBj.png')
     k.loadSprite('charged-bolt', 'hsrj8Pg.png')
+    k.loadSprite('storm', 'we7eyUv.png')
     k.loadSprite('stairs', 'bC3dBbM.png')
     k.loadSprite('chest-closed', '5tdiIIx.png')
     k.loadSprite('chest-opened', 'WliBmsB.png')
@@ -257,7 +261,11 @@ const App = () => {
 
 
       let PLAYER_SPEED = 120
-      let manaCharged = true
+      let stormCharged = true
+      let nukeCharged = true
+      let boltCharged = true
+      let defCharged = true
+      let isImmunity = false
 
       const player = k.add([
         k.sprite('player-right'),
@@ -334,27 +342,47 @@ const App = () => {
 
         let isLuck = luck[Math.floor(Math.random() * luck.length)]
 
-        if(manaCharged && isLuck){
+        if(nukeCharged && isLuck){
           k.destroyAll("mob")
+          k.play("nuke", {volume: 0.6})
           k.shake(6)
-          manaCharged = false
+          nukeCharged = false
 
           k.wait(5, () => {
             console.log('timer3s')
-            manaCharged = true
+            nukeCharged = true
             })
         }
         else{
-          manaCharged = false
+          nukeCharged = false
+        }
+      })
+
+
+      k.onKeyPress('d', () => {
+
+        let isLuck = luck[Math.floor(Math.random() * luck.length)]
+
+        if(defCharged && isLuck){
+          defCharged = false
+          isImmunity = true
+          console.log('immunity for 2s')
+          k.play("immunity-start", {volume: 0.6})
+          k.wait(5, () => {
+            console.log('timeout')
+            defCharged = true
+            isImmunity = false
+            k.play("immunity-stop", {volume: 0.9})
+            })
+        }
+        else{
+          defCharged = false
         }
       })
 
       k.onKeyPress('s', () => {
         if (tokenURIs.includes(uris[0]) || thisGameNFTs.includes(uris[0])){
            PLAYER_SPEED = 270
-        }
-        else {
-          //pass
         }
       })
 
@@ -363,7 +391,25 @@ const App = () => {
       })
 
       k.onKeyPress('space', () => {
+      if(boltCharged){
         spawnChargedBolt(player)
+        boltCharged = false
+        k.wait(1, () => {
+          boltCharged = true
+        })
+      }
+      })
+
+      k.onKeyPress('f', () => {
+        if(stormCharged){
+          spawnStorm(player)
+          stormCharged = false
+          k.wait(1, () => {
+              stormCharged = true
+            })
+        }
+
+
       })
 
 
@@ -390,6 +436,9 @@ const App = () => {
           k.area(),
           k.move(p.dir, speed),
         ])
+        k.wait(5, () => {
+              k.destroy(obj)
+          })
       }
 
       function spawnFire(p) {
@@ -399,7 +448,18 @@ const App = () => {
           'fire',
           'dangerous',
           k.area(),
-          k.move(p.dir),
+        ])
+        k.wait(2, () => {
+              k.destroy(obj)
+          })
+      }
+      function spawnStorm(p) {
+        const obj = k.add([
+          k.sprite('storm'),
+          k.pos(p.pos),
+          'storm',
+          'player-attack',
+          k.area(),
         ])
         k.wait(2, () => {
               k.destroy(obj)
@@ -416,7 +476,6 @@ const App = () => {
       k.onCollide('tornado', 'wall', (t,w) =>{
         k.shake(1)
         k.destroy(t)
-        //k.play("explosion", {volume: 0.5})
       })
 
       k.onCollide('player-attack', 'mob', (a,m) =>{
@@ -520,7 +579,9 @@ const App = () => {
 
 
       player.onCollide('dangerous', () => {
-        k.go('lose', {score : scoreLabel.value})
+        if(!isImmunity){
+          k.go('lose', {score : scoreLabel.value})
+        }
       })
 
     })
@@ -570,7 +631,7 @@ if (name == null) {
           ))}
           </nav>
           <div id="info">
-          <h3>Address: </h3> <span>{account}</span>
+          <h3>Wallet: </h3> <span>{account}</span>
           <h3>Contract: </h3>  <span>{name}</span>
           <h3>Total Supply: </h3>  <span>{totalSupply}</span>
           </div>
