@@ -1,12 +1,10 @@
 import {useEffect, useState} from 'react'
 import * as React from "react"
 import {useForm} from "react-hook-form"
-//import { useForm } from "react-hook-form";
 import './App.css'
 import kaboom from "kaboom"
 import Web3 from "web3/dist/web3.min.js";
 import ItemToken from './abis/ItemToken.json'
-
 
 const App = () => {
 
@@ -17,7 +15,7 @@ const App = () => {
     'https://i.imgur.com/MzHoavD.png',
     'https://i.imgur.com/Ju0rVFp.png',
     'https://i.imgur.com/aVviGzf.png',
-  ]
+]
 
   const [account, setAccount] = useState(null)
   const [token, setToken] = useState(null)
@@ -26,7 +24,6 @@ const App = () => {
   const [tokenIds, setTokenIds] = useState([])
   const [name, setName] = useState(null)
   const [balanceChanged, setBalanceChanged] = useState(null)
-
 
 
     const transfer_nft = async (_to, _tokenId) => {
@@ -44,15 +41,68 @@ const App = () => {
       uris[_numberNFT]
     )
     .send({ from: account })
-    .on('transactionHash', (hash) => {
-      //setTokenURIs(tokenURIs => [...tokenURIs, uris[_numberNFT]])
-      //setTotalSupply(totalSupply => totalSupply + 1)
-      //setTokenIds(tokenIds => [...tokenIds, totalSupply])
-
-    })
+    .on('transactionHash', (hash) => {})
     setBalanceChanged(balanceChanged => balanceChanged + 1)
-}
+    }
 
+useEffect(() => {
+
+  const loadWeb3 = async () => {
+    if (window.ethereum) {
+      window.web3 = new Web3(window.ethereum)
+      await window.ethereum.enable()
+    }
+    else if (window.web3) {
+      window.web3 = new Web3(window.web3.currentProvider)
+    }
+    else {
+      window.alert('Non-Ethereum browser detected. You should consider trying Metamask!')
+    }
+  }
+
+  const loadBlockchainData = async () => {
+    setTokenIds(tokenIds => [])
+    setTokenURIs(tokenURIs => [])
+    const web3 = window.web3
+    const accounts = await web3.eth.getAccounts()
+    console.log("account", accounts[0])
+    setAccount(accounts[0])
+
+    // Load smart contract
+    const networkId = await web3.eth.net.getId()
+
+    const networkData = ItemToken.networks[networkId]
+    if(networkData) {
+      const abi = ItemToken.abi
+      const address = networkData.address
+      const token = new web3.eth.Contract(abi, address)
+      setToken(token)
+      const totalSupply = await token.methods.totalSupply().call()
+      const name = await token.methods.name().call()
+      setTotalSupply(parseInt(totalSupply))
+
+      let balanceOf = await token.methods.balanceOf(accounts[0]).call()
+      for (let i = 0; i < balanceOf; i++) {
+        let id = await token.methods.tokenOfOwnerByIndex(accounts[0], i).call()
+        console.log(id)
+        let tokenURI = await token.methods.tokenURI(id).call()
+
+        setTokenIds(tokenIds => [...tokenIds, id])
+        setTokenURIs(tokenURIs => [...tokenURIs, tokenURI])
+      }
+      await setName(name)
+    }
+    else{
+          alert('Smart contract not deployed to network')
+    }}
+
+  const remote = async () => {
+    await loadWeb3()
+    await loadBlockchainData()
+  }
+
+  remote()
+},[balanceChanged])
 
 
   useEffect(() => {
@@ -557,105 +607,26 @@ const App = () => {
       k.add([k.text('GAME OVER',{size: 25}), k.origin('center'), k.pos(264,150)])
       k.add([k.text('SCORE:' + score), k.origin('center'), k.pos(k.width()/2, k.height()/2)])
       k.add([k.text('REFRESH TO TRY AGAIN', {size: 25} ), k.origin('center'), k.pos(264,450)])
-
     })
-
 
   k.go('game', { level: 0, score: 0 })
 
 }},[name])
 
 
-useEffect(() => {
-
-
-  const loadWeb3 = async () => {
-    if (window.ethereum) {
-      window.web3 = new Web3(window.ethereum)
-      await window.ethereum.enable()
-    }
-    else if (window.web3) {
-      window.web3 = new Web3(window.web3.currentProvider)
-    }
-    else {
-      window.alert('Non-Ethereum browser detected. You should consider trying Metamask!')
-    }
-  }
-
-  const loadBlockchainData = async () => {
-    setTokenIds(tokenIds => [])
-    setTokenURIs(tokenURIs => [])
-    const web3 = window.web3
-    const accounts = await web3.eth.getAccounts()
-    console.log("account", accounts[0])
-    setAccount(accounts[0])
-
-    // Load smart contract
-    const networkId = await web3.eth.net.getId()
-
-    const networkData = ItemToken.networks[networkId]
-    if(networkData) {
-      const abi = ItemToken.abi
-      const address = networkData.address
-      const token = new web3.eth.Contract(abi, address)
-      setToken(token)
-      const totalSupply = await token.methods.totalSupply().call()
-      const name = await token.methods.name().call()
-      setTotalSupply(parseInt(totalSupply))
-
-      let balanceOf = await token.methods.balanceOf(accounts[0]).call()
-      for (let i = 0; i < balanceOf; i++) {
-        let id = await token.methods.tokenOfOwnerByIndex(accounts[0], i).call()
-        console.log(id)
-        let tokenURI = await token.methods.tokenURI(id).call()
-
-        setTokenIds(tokenIds => [...tokenIds, id])
-        setTokenURIs(tokenURIs => [...tokenURIs, tokenURI])
-
-
-      }
-
-      await setName(name)
-
-
-    }
-    else{
-          alert('Smart contract not deployed to network')
-    }
-
-    }
-
-
-
-  const remote = async () => {
-
-    await loadWeb3()
-
-    await loadBlockchainData()
-  }
-
-  remote()
-},[balanceChanged])
 
 
 
 
-
-
-const { register, handleSubmit } = useForm();
+const { register, handleSubmit } = useForm()
 const onSubmit = async (data) => {
   if (isNaN(parseInt(data.tokenID)) || !window.web3.utils.isAddress(data.sendTo))
   {
     alert('Token ID is not an int / Bad eth address')
   }
-  else{//console.log(window.web3.utils.isAddress(data.sendTo))
-  //console.log(typeof(data.tokenID))
+  else{
   transfer_nft(data.sendTo, parseInt(data.tokenID))
-
-}
-}
-
-//const {register, handleSubmit, errors} = useForm()
+}}
 
 if (name == null) {
   return (
