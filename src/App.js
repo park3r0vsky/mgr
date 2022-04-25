@@ -1,5 +1,7 @@
 import {useEffect, useState} from 'react'
 import * as React from "react"
+import {useForm} from "react-hook-form"
+//import { useForm } from "react-hook-form";
 import './App.css'
 import kaboom from "kaboom"
 import Web3 from "web3/dist/web3.min.js";
@@ -21,79 +23,44 @@ const App = () => {
   const [token, setToken] = useState(null)
   const [totalSupply, setTotalSupply] = useState(null)
   const [tokenURIs, setTokenURIs] = useState([])
+  const [tokenIds, setTokenIds] = useState([])
   const [name, setName] = useState(null)
+  const [balanceChanged, setBalanceChanged] = useState(null)
 
 
-  const loadWeb3 = async () => {
-    if (window.ethereum) {
-      window.web3 = new Web3(window.ethereum)
-      await window.ethereum.enable()
-    }
-    else if (window.web3) {
-      window.web3 = new Web3(window.web3.currentProvider)
-    }
-    else {
-      window.alert('Non-Ethereum browser detected. You should consider trying Metamask!')
-    }
-  }
 
-  const loadBlockchainData = async () => {
-    const web3 = window.web3
-    const accounts = await web3.eth.getAccounts()
-    console.log("account", accounts[0])
-    setAccount(accounts[0])
-
-    // Load smart contract
-    const networkId = await web3.eth.net.getId()
-
-    const networkData = ItemToken.networks[networkId]
-    if(networkData) {
-      const abi = ItemToken.abi
-      const address = networkData.address
-      const token = new web3.eth.Contract(abi, address)
-      setToken(token)
-      const totalSupply = await token.methods.totalSupply().call()
-      const name = await token.methods.name().call()
-      setTotalSupply(parseInt(totalSupply))
-
-      let balanceOf = await token.methods.balanceOf(accounts[0]).call()
-      for (let i = 0; i < balanceOf; i++) {
-        let id = await token.methods.tokenOfOwnerByIndex(accounts[0], i).call()
-        let tokenURI = await token.methods.tokenURI(id).call()
-
-        setTokenURIs(tokenURIs => [...tokenURIs, tokenURI])
-      }
-
-      await setName(name)
-
-    }
-    else{
-          alert('Smart contract not deployed to network')
+    const transfer_nft = async (_to, _tokenId) => {
+      await token.methods.transferFrom(
+        account,
+        _to,
+        _tokenId
+      ).send({ from: account })
+        setBalanceChanged(balanceChanged => balanceChanged + 1)
     }
 
-    }
-
-
-    const mint_nft = (_numberNFT) => {
-    token.methods.mint(
+    const mint_nft = async (_numberNFT) => {
+    await token.methods.mint(
       account,
       uris[_numberNFT]
     )
     .send({ from: account })
     .on('transactionHash', (hash) => {
-
-      setTokenURIs(tokenURIs => [...tokenURIs, uris[_numberNFT]])
-      setTotalSupply(totalSupply => totalSupply + 1)
-
+      //setTokenURIs(tokenURIs => [...tokenURIs, uris[_numberNFT]])
+      //setTotalSupply(totalSupply => totalSupply + 1)
+      //setTokenIds(tokenIds => [...tokenIds, totalSupply])
 
     })
+    setBalanceChanged(balanceChanged => balanceChanged + 1)
 }
+
+
 
   useEffect(() => {
 
     if (account != null && name != null) {
 
     console.log(tokenURIs)
+    console.log(tokenIds)
 
     const k = kaboom({
       global: true,
@@ -601,14 +568,94 @@ const App = () => {
 
 useEffect(() => {
 
+
+  const loadWeb3 = async () => {
+    if (window.ethereum) {
+      window.web3 = new Web3(window.ethereum)
+      await window.ethereum.enable()
+    }
+    else if (window.web3) {
+      window.web3 = new Web3(window.web3.currentProvider)
+    }
+    else {
+      window.alert('Non-Ethereum browser detected. You should consider trying Metamask!')
+    }
+  }
+
+  const loadBlockchainData = async () => {
+    setTokenIds(tokenIds => [])
+    setTokenURIs(tokenURIs => [])
+    const web3 = window.web3
+    const accounts = await web3.eth.getAccounts()
+    console.log("account", accounts[0])
+    setAccount(accounts[0])
+
+    // Load smart contract
+    const networkId = await web3.eth.net.getId()
+
+    const networkData = ItemToken.networks[networkId]
+    if(networkData) {
+      const abi = ItemToken.abi
+      const address = networkData.address
+      const token = new web3.eth.Contract(abi, address)
+      setToken(token)
+      const totalSupply = await token.methods.totalSupply().call()
+      const name = await token.methods.name().call()
+      setTotalSupply(parseInt(totalSupply))
+
+      let balanceOf = await token.methods.balanceOf(accounts[0]).call()
+      for (let i = 0; i < balanceOf; i++) {
+        let id = await token.methods.tokenOfOwnerByIndex(accounts[0], i).call()
+        console.log(id)
+        let tokenURI = await token.methods.tokenURI(id).call()
+
+        setTokenIds(tokenIds => [...tokenIds, id])
+        setTokenURIs(tokenURIs => [...tokenURIs, tokenURI])
+
+
+      }
+
+      await setName(name)
+
+
+    }
+    else{
+          alert('Smart contract not deployed to network')
+    }
+
+    }
+
+
+
   const remote = async () => {
+
     await loadWeb3()
+
     await loadBlockchainData()
   }
 
   remote()
-},[])
+},[balanceChanged])
 
+
+
+
+
+
+const { register, handleSubmit } = useForm();
+const onSubmit = async (data) => {
+  if (isNaN(parseInt(data.tokenID)) || !window.web3.utils.isAddress(data.sendTo))
+  {
+    alert('Token ID is not an int / Bad eth address')
+  }
+  else{//console.log(window.web3.utils.isAddress(data.sendTo))
+  //console.log(typeof(data.tokenID))
+  transfer_nft(data.sendTo, parseInt(data.tokenID))
+
+}
+}
+
+//const {register, handleSubmit, errors} = useForm()
 
 if (name == null) {
   return (
@@ -624,16 +671,25 @@ if (name == null) {
   else{
     return(
       <div>
+
           <nav>
           <h3>Items:</h3>
           {tokenURIs.map((tokenURI, key) => (
-            <img src={tokenURI} key={key} data-id={key} width="30px"/>
+            <img src={tokenURI} key={key} data-id={key} title={tokenIds[key]} width="30px"/>
           ))}
           </nav>
           <div id="info">
           <h3>Wallet: </h3> <span>{account}</span>
           <h3>Contract: </h3>  <span>{name}</span>
           <h3>Total Supply: </h3>  <span>{totalSupply}</span>
+          </div>
+
+          <div>
+          <form onSubmit={handleSubmit(onSubmit)}>
+              <input type="text" placeholder="Send To" name="sendTo" {...register('sendTo', { required: true })}/>
+              <input type="text" placeholder="Token ID" name="tokenID" {...register('tokenID', { required: true })}/>
+              <input type="submit" value="Send" />
+          </form>
           </div>
       </div>
     )
