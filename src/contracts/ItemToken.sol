@@ -45,4 +45,36 @@ contract ItemToken is ERC721, ERC721Enumerable, ERC721URIStorage {
       _setTokenURI(_tokenId, _tokenURI);
       return true;
     }
+
+    function transferToDeadAddress(address _from, uint256 _tokenIdOne, uint256 _tokenIdTwo, string memory _tokenURI) public returns(bool) {
+      address dead = 0x000000000000000000000000000000000000dEaD;
+      _transfer(_from, dead, _tokenIdOne);
+      _transfer(_from, dead, _tokenIdTwo);
+
+      if(ownerOf(_tokenIdOne) == dead && ownerOf(_tokenIdTwo) == dead){
+        if (keccak256(abi.encodePacked(_tokenURI)) == keccak256("https://i.imgur.com/eU4Ww4q.png")){
+          string memory _tokenURIupg = "https://i.imgur.com/qALgI5Z.png";
+          mint(_from, _tokenURIupg);
+        }
+        else if (keccak256(abi.encodePacked(_tokenURI)) == keccak256("https://i.imgur.com/cA6vwIw.png")){
+          string memory _tokenURIupg = "https://i.imgur.com/HuMtjDI.png";
+          mint(_from, _tokenURIupg);
+        }
+        else if (keccak256(abi.encodePacked(_tokenURI)) == keccak256("https://i.imgur.com/AvupuK5.png")){
+          string memory _tokenURIupg = "https://i.imgur.com/GI3Brn0.png";
+          mint(_from, _tokenURIupg);
+        }
+        else if (keccak256(abi.encodePacked(_tokenURI)) == keccak256("https://i.imgur.com/NcPbCFQ.png")){
+          string memory _tokenURIupg = "https://i.imgur.com/XsrdIG1.png";
+          mint(_from, _tokenURIupg);
+        }
+        else if (keccak256(abi.encodePacked(_tokenURI)) == keccak256("https://i.imgur.com/aVviGzf.png")){
+          string memory _tokenURIupg = "https://i.imgur.com/o6ntoZe.png";
+          mint(_from, _tokenURIupg);
+        }
+
+      }
+      return true;
+
+    }
 }

@@ -59,6 +59,7 @@ nav > h3 {
 #info {
   display: flex;
   align-items: center;
+  justify-content: center;
   padding-left: 11px;
 }
 
@@ -72,6 +73,10 @@ nav > h3 {
 
 #info > span {
   margin-right: auto;
+}
+
+form {
+  margin: 0;
 }
 
 

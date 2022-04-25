@@ -12,8 +12,8 @@ const App = () => {
   [
     'https://i.imgur.com/eU4Ww4q.png',
     'https://i.imgur.com/cA6vwIw.png',
-    'https://i.imgur.com/MzHoavD.png',
-    'https://i.imgur.com/Ju0rVFp.png',
+    'https://i.imgur.com/AvupuK5.png',
+    'https://i.imgur.com/NcPbCFQ.png',
     'https://i.imgur.com/aVviGzf.png',
 ]
 
@@ -22,6 +22,7 @@ const App = () => {
   const [totalSupply, setTotalSupply] = useState(null)
   const [tokenURIs, setTokenURIs] = useState([])
   const [tokenIds, setTokenIds] = useState([])
+  const [duplicateTokens, setDuplicateTokens] = useState([])
   const [name, setName] = useState(null)
   const [balanceChanged, setBalanceChanged] = useState(null)
 
@@ -84,11 +85,12 @@ useEffect(() => {
       let balanceOf = await token.methods.balanceOf(accounts[0]).call()
       for (let i = 0; i < balanceOf; i++) {
         let id = await token.methods.tokenOfOwnerByIndex(accounts[0], i).call()
-        console.log(id)
+        //console.log(id)
         let tokenURI = await token.methods.tokenURI(id).call()
 
         setTokenIds(tokenIds => [...tokenIds, id])
         setTokenURIs(tokenURIs => [...tokenURIs, tokenURI])
+
       }
       await setName(name)
     }
@@ -96,21 +98,34 @@ useEffect(() => {
           alert('Smart contract not deployed to network')
     }}
 
+
+
   const remote = async () => {
     await loadWeb3()
     await loadBlockchainData()
   }
-
   remote()
+
 },[balanceChanged])
 
+
+useEffect(() => {
+if (tokenURIs.length != 0){
+    let checkArray = arr => arr.filter((item, index) => arr.indexOf(item) != index)
+    console.log(tokenURIs)
+    console.log([...new Set(checkArray(tokenURIs))])
+    setDuplicateTokens([...new Set(checkArray(tokenURIs))])
+    //console.log(duplicateTokens)
+}
+
+},[name, balanceChanged])
 
   useEffect(() => {
 
     if (account != null && name != null) {
 
-    console.log(tokenURIs)
-    console.log(tokenIds)
+    //console.log(tokenURIs)
+    //console.log(tokenIds)
 
     const k = kaboom({
       global: true,
@@ -167,10 +182,10 @@ useEffect(() => {
     k.loadSprite('chest-opened', 'WliBmsB.png')
     k.loadSprite('bg', '7vRv1J3.png')
 
-    k.play("soundtrack", {
-        volume: 0.8,
-        loop: true
-    })
+  //  k.play("soundtrack", {
+  //      volume: 0.8,
+  //      loop: true
+  //  })
 
     k.scene("game", ({ level, score }) => {
 
@@ -622,11 +637,53 @@ const { register, handleSubmit } = useForm()
 const onSubmit = async (data) => {
   if (isNaN(parseInt(data.tokenID)) || !window.web3.utils.isAddress(data.sendTo))
   {
-    alert('Token ID is not an int / Bad eth address')
+    alert('Token ID is not an int / Incorrect eth address')
   }
   else{
-  transfer_nft(data.sendTo, parseInt(data.tokenID))
+    transfer_nft(data.sendTo, parseInt(data.tokenID))
 }}
+
+
+const upgrade_nft = async (_tokenIdOne, _tokenIdTwo, _tokenUriToUpgrade) => {
+
+  await token.methods.transferToDeadAddress(
+    account,
+     _tokenIdOne,
+     _tokenIdTwo,
+     _tokenUriToUpgrade
+   ).send({ from: account })
+     setBalanceChanged(balanceChanged => balanceChanged + 1)
+}
+
+
+const imageClick = async (text) => {
+  let tokenIdOne = null
+  let tokenIdTwo = null
+  let uriToUpgrade = String(Object.values(text))
+
+  for (let i = 0; i<tokenURIs.length; i++){
+    let tempURI = await token.methods.tokenURI(tokenIds[i]).call()
+    if (tokenIdOne == null && tokenIdTwo == null){
+
+       if (String(tempURI) == uriToUpgrade){
+         tokenIdOne = parseInt(tokenIds[i])
+         //console.log(tokenIdOne)
+       }
+    }
+    else if (tokenIdOne != null && tokenIdTwo == null) {
+      if (String(tempURI) == uriToUpgrade){
+        tokenIdTwo = parseInt(tokenIds[i])
+
+      }
+    }
+    else {
+      break
+    }
+  }
+  if (tokenIdOne != null && tokenIdTwo != null){
+    upgrade_nft(tokenIdOne, tokenIdTwo, uriToUpgrade)
+}
+}
 
 if (name == null) {
   return (
@@ -655,12 +712,16 @@ if (name == null) {
           <h3>Total Supply: </h3>  <span>{totalSupply}</span>
           </div>
 
-          <div>
+          <div id="info">
           <form onSubmit={handleSubmit(onSubmit)}>
               <input type="text" placeholder="Send To" name="sendTo" {...register('sendTo', { required: true })}/>
               <input type="text" placeholder="Token ID" name="tokenID" {...register('tokenID', { required: true })}/>
               <input type="submit" value="Send" />
           </form>
+            <h3>Upgradable: </h3>
+            {duplicateTokens.map((duplicateToken, key) => (
+              <img src={duplicateToken} key={key} data-id={key} onClick={() => imageClick({duplicateToken})} width="30px"/>
+            ))}
           </div>
       </div>
     )
