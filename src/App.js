@@ -20,31 +20,13 @@ const App = () => {
   const [account, setAccount] = useState(null)
   const [token, setToken] = useState(null)
   const [totalSupply, setTotalSupply] = useState(null)
+  const [burnt, setBurnt] = useState(null)
   const [tokenURIs, setTokenURIs] = useState([])
   const [tokenIds, setTokenIds] = useState([])
   const [duplicateTokens, setDuplicateTokens] = useState([])
   const [name, setName] = useState(null)
   const [balanceChanged, setBalanceChanged] = useState(null)
-
-
-    const transfer_nft = async (_to, _tokenId) => {
-      await token.methods.transferFrom(
-        account,
-        _to,
-        _tokenId
-      ).send({ from: account })
-        setBalanceChanged(balanceChanged => balanceChanged + 1)
-    }
-
-    const mint_nft = async (_numberNFT) => {
-    await token.methods.mint(
-      account,
-      uris[_numberNFT]
-    )
-    .send({ from: account })
-    .on('transactionHash', (hash) => {})
-    setBalanceChanged(balanceChanged => balanceChanged + 1)
-    }
+  const [loadChanged, setLoadChanged] = useState(null)
 
 useEffect(() => {
 
@@ -81,11 +63,12 @@ useEffect(() => {
       const totalSupply = await token.methods.totalSupply().call()
       const name = await token.methods.name().call()
       setTotalSupply(parseInt(totalSupply))
+      let burnAmount = await token.methods.balanceOf('0x000000000000000000000000000000000000dEaD').call()
+      setBurnt(burnt => burnAmount)
 
       let balanceOf = await token.methods.balanceOf(accounts[0]).call()
       for (let i = 0; i < balanceOf; i++) {
         let id = await token.methods.tokenOfOwnerByIndex(accounts[0], i).call()
-        //console.log(id)
         let tokenURI = await token.methods.tokenURI(id).call()
 
         setTokenIds(tokenIds => [...tokenIds, id])
@@ -103,34 +86,30 @@ useEffect(() => {
   const remote = async () => {
     await loadWeb3()
     await loadBlockchainData()
+    await setLoadChanged(loadChanged => loadChanged + 1)
   }
   remote()
+
 
 },[balanceChanged])
 
 
 useEffect(() => {
-if (tokenURIs.length != 0){
-    let checkArray = arr => arr.filter((item, index) => arr.indexOf(item) != index)
-    console.log(tokenURIs)
-    console.log([...new Set(checkArray(tokenURIs))])
-    setDuplicateTokens([...new Set(checkArray(tokenURIs))])
-    //console.log(duplicateTokens)
+if (tokenURIs.length !== 0){
+    let checkArray = arr => arr.filter((item, index) => arr.indexOf(item) !== index)
+    setDuplicateTokens([...new Set(checkArray(tokenURIs))].filter(item => uris.includes(item)))
 }
 
-},[name, balanceChanged])
+},[name, loadChanged])
 
   useEffect(() => {
 
     if (account != null && name != null) {
 
-    //console.log(tokenURIs)
-    //console.log(tokenIds)
-
     const k = kaboom({
       global: true,
       width: 528,
-      height: 576,
+      height: 528,
       scale: 1,
       debug: true,
       background: [0, 0, 0, 1],
@@ -182,10 +161,10 @@ if (tokenURIs.length != 0){
     k.loadSprite('chest-opened', 'WliBmsB.png')
     k.loadSprite('bg', '7vRv1J3.png')
 
-  //  k.play("soundtrack", {
-  //      volume: 0.8,
-  //      loop: true
-  //  })
+    k.play("soundtrack", {
+        volume: 0.8,
+        loop: true
+    })
 
     k.scene("game", ({ level, score }) => {
 
@@ -288,8 +267,8 @@ if (tokenURIs.length != 0){
         },
       ])
 
-      k.add([k.text('level: ' + parseInt(level + 1), {size: 30}), k.pos(315,500)])
-      k.add([k.text('NFT Game', {size: 45}), k.pos(55,490)])
+      k.add([k.text('level: ' + parseInt(level + 1), {size: 30}), k.pos(315,490)])
+      k.add([k.text('NFT Game', {size: 45}), k.pos(55,475)])
 
 
       let PLAYER_SPEED = 120
@@ -329,6 +308,16 @@ if (tokenURIs.length != 0){
 
           let numberNFT = Math.floor(Math.random() * uris.length)
           thisGameNFTs.push(uris[numberNFT])
+
+          const mint_nft = async (_numberNFT) => {
+          await token.methods.mint(
+            account,
+            uris[_numberNFT]
+          )
+          .send({ from: account })
+          .on('transactionHash', (hash) => {})
+          setBalanceChanged(balanceChanged => balanceChanged + 1)
+          }
 
           mint_nft(numberNFT)
 
@@ -440,8 +429,6 @@ if (tokenURIs.length != 0){
               stormCharged = true
             })
         }
-
-
       })
 
 
@@ -629,10 +616,6 @@ if (tokenURIs.length != 0){
 }},[name])
 
 
-
-
-
-
 const { register, handleSubmit } = useForm()
 const onSubmit = async (data) => {
   if (isNaN(parseInt(data.tokenID)) || !window.web3.utils.isAddress(data.sendTo))
@@ -644,8 +627,17 @@ const onSubmit = async (data) => {
 }}
 
 
-const upgrade_nft = async (_tokenIdOne, _tokenIdTwo, _tokenUriToUpgrade) => {
+const transfer_nft = async (_to, _tokenId) => {
+  await token.methods.transferFrom(
+    account,
+    _to,
+    _tokenId
+  ).send({ from: account })
+    setBalanceChanged(balanceChanged => balanceChanged + 1)
+}
 
+
+const upgrade_nft = async (_tokenIdOne, _tokenIdTwo, _tokenUriToUpgrade) => {
   await token.methods.transferToDeadAddress(
     account,
      _tokenIdOne,
@@ -665,25 +657,23 @@ const imageClick = async (text) => {
     let tempURI = await token.methods.tokenURI(tokenIds[i]).call()
     if (tokenIdOne == null && tokenIdTwo == null){
 
-       if (String(tempURI) == uriToUpgrade){
+       if (String(tempURI) === uriToUpgrade){
          tokenIdOne = parseInt(tokenIds[i])
-         //console.log(tokenIdOne)
        }
     }
     else if (tokenIdOne != null && tokenIdTwo == null) {
-      if (String(tempURI) == uriToUpgrade){
+      if (String(tempURI) === uriToUpgrade){
         tokenIdTwo = parseInt(tokenIds[i])
-
-      }
-    }
+      }}
     else {
       break
     }
   }
   if (tokenIdOne != null && tokenIdTwo != null){
     upgrade_nft(tokenIdOne, tokenIdTwo, uriToUpgrade)
+  }
 }
-}
+
 
 if (name == null) {
   return (
@@ -707,9 +697,10 @@ if (name == null) {
           ))}
           </nav>
           <div id="info">
-          <h3>Wallet: </h3> <span>{account}</span>
-          <h3>Contract: </h3>  <span>{name}</span>
-          <h3>Total Supply: </h3>  <span>{totalSupply}</span>
+          <h3>💵Wallet: </h3> <span>{account}</span>
+          <h3>📜Contract: </h3>  <span>{name}</span>
+          <h3>📊Minted: </h3>  <span>{totalSupply}</span>
+          <h3>🔥Burnt: </h3>  <span>{burnt}</span>
           </div>
 
           <div id="info">
@@ -718,9 +709,9 @@ if (name == null) {
               <input type="text" placeholder="Token ID" name="tokenID" {...register('tokenID', { required: true })}/>
               <input type="submit" value="Send" />
           </form>
-            <h3>Upgradable: </h3>
+            <h3>⏫Upgradable: </h3>
             {duplicateTokens.map((duplicateToken, key) => (
-              <img src={duplicateToken} key={key} data-id={key} onClick={() => imageClick({duplicateToken})} width="30px"/>
+              <img src={duplicateToken} key={key} data-id={key} onClick={() => imageClick({duplicateToken})} width="25px"/>
             ))}
           </div>
       </div>

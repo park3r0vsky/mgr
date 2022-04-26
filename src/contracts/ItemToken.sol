@@ -57,7 +57,7 @@ contract ItemToken is ERC721, ERC721Enumerable, ERC721URIStorage {
           mint(_from, _tokenURIupg);
         }
         else if (keccak256(abi.encodePacked(_tokenURI)) == keccak256("https://i.imgur.com/cA6vwIw.png")){
-          string memory _tokenURIupg = "https://i.imgur.com/HuMtjDI.png";
+          string memory _tokenURIupg = "https://i.imgur.com/mV9ypxl.png";
           mint(_from, _tokenURIupg);
         }
         else if (keccak256(abi.encodePacked(_tokenURI)) == keccak256("https://i.imgur.com/AvupuK5.png")){
