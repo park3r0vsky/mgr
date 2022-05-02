@@ -35,7 +35,7 @@ contract('Item Token', (accounts) => {
     let result
 
     it('mints tokens', async () => {
-      await token.mint(accounts[0], 'https://www.token-uri.com/nft')
+      await token.mint(accounts[0], 'https://www.random-nft.net/uri')
 
       result = await token.totalSupply()
       assert.equal(result.toString(), '1', 'total supply is correct')
@@ -57,9 +57,45 @@ contract('Item Token', (accounts) => {
       assert.equal(tokenIds.toString(), expected.toString(), 'tokenIds are correct')
 
       let tokenURI = await token.tokenURI('1')
-      assert.equal(tokenURI, 'https://www.token-uri.com/nft')
+      assert.equal(tokenURI, 'https://www.random-nft.net/uri')
 
     })
+  })
+
+  describe('token transfer', async () => {
+    //await token.mint(accounts[0], 'https://www.random-nft.net/uri')
+
+    it('transfer tokens', async () => {
+    await token.transferFrom(accounts[0], accounts[1], 1)
+
+    let ownerOfTokenOne = await token.ownerOf(1)
+
+    assert.equal(ownerOfTokenOne.toString(), accounts[1].toString(), 'new owner is correct')
+    assert.notEqual(ownerOfTokenOne.toString(), accounts[0].toString(), 'old owner doesnt have a token')
+
+  })
+  })
+
+  describe('upgrade tokens', async () => {
+
+    it('upgrade tokens', async () => {
+    await token.mint(accounts[0], 'https://www.random1-nft.net/uri')
+    await token.mint(accounts[0], 'https://www.random2-nft.net/uri')
+    await token.transferToDeadAddress(accounts[0], 2, 3, 'https://i.imgur.com/eU4Ww4q.png')
+
+    let ownerOfTokenTwo = await token.ownerOf(2)
+    let ownerOfTokenThree = await token.ownerOf(3)
+    let ownerOfTokenFour = await token.ownerOf(4)
+    assert.equal(ownerOfTokenTwo.toString(), '0x000000000000000000000000000000000000dEaD', 'token 2 on dead address')
+    assert.equal(ownerOfTokenThree.toString(), '0x000000000000000000000000000000000000dEaD', 'token 3 on dead address')
+    assert.equal(ownerOfTokenFour.toString(), accounts[0].toString(), 'upgraded token on good address')
+
+
+    let tokenFourURI = await token.tokenURI('4')
+    assert.notEqual(ownerOfTokenTwo.toString(), accounts[0].toString(), 'token 2 on dead address')
+    assert.equal(tokenFourURI.toString(), 'https://i.imgur.com/qALgI5Z.png', 'upgraded token URI correct')
+
+  })
   })
 
 })
