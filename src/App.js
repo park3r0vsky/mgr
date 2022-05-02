@@ -15,7 +15,7 @@ const App = () => {
     'https://i.imgur.com/AvupuK5.png',
     'https://i.imgur.com/NcPbCFQ.png',
     'https://i.imgur.com/aVviGzf.png',
-]
+  ]
 
   const [account, setAccount] = useState(null)
   const [token, setToken] = useState(null)
@@ -116,7 +116,7 @@ if (tokenURIs.length !== 0){
     })
 
     let thisGameNFTs = []
-    const luck = [true, false]
+    let luck = [true, false, false, false]
 
     k.loadSound('soundtrack', './sounds/forever.mp3')
     k.loadSound('explosion', './sounds/explosion.mp3')
@@ -361,7 +361,13 @@ if (tokenURIs.length !== 0){
 
       k.onKeyPress('q', () => {
 
+        if (tokenURIs.includes(uris[2]) || thisGameNFTs.includes(uris[2]) || tokenURIs.includes("https://i.imgur.com/GI3Brn0.png"))
+        {
+           luck = [true, false]
+        }
+
         let isLuck = luck[Math.floor(Math.random() * luck.length)]
+        luck = [true, false, false, false]
 
         if(nukeCharged && isLuck){
           k.destroyAll("mob")
@@ -382,7 +388,13 @@ if (tokenURIs.length !== 0){
 
       k.onKeyPress('d', () => {
 
+        if (tokenURIs.includes(uris[3]) || thisGameNFTs.includes(uris[3]) || tokenURIs.includes("https://i.imgur.com/XsrdIG1.png"))
+        {
+           luck = [true, false]
+        }
+
         let isLuck = luck[Math.floor(Math.random() * luck.length)]
+        luck = [true, false, false, false]
 
         if(defCharged && isLuck){
           defCharged = false
@@ -402,7 +414,7 @@ if (tokenURIs.length !== 0){
       })
 
       k.onKeyPress('s', () => {
-        if (tokenURIs.includes(uris[0]) || thisGameNFTs.includes(uris[0])){
+        if (tokenURIs.includes(uris[0]) || thisGameNFTs.includes(uris[0]) || tokenURIs.includes("https://i.imgur.com/qALgI5Z.png")){
            PLAYER_SPEED = 270
         }
       })
@@ -415,9 +427,18 @@ if (tokenURIs.length !== 0){
       if(boltCharged){
         spawnChargedBolt(player)
         boltCharged = false
-        k.wait(1, () => {
-          boltCharged = true
-        })
+
+        if (tokenURIs.includes(uris[4]) || thisGameNFTs.includes(uris[4]) || tokenURIs.includes("https://i.imgur.com/o6ntoZe.png")){
+          k.wait(1, () => {
+            boltCharged = true
+          })
+        }
+        else{
+          k.wait(3, () => {
+            boltCharged = true
+          })
+        }
+
       }
       })
 
@@ -425,9 +446,16 @@ if (tokenURIs.length !== 0){
         if(stormCharged){
           spawnStorm(player)
           stormCharged = false
-          k.wait(1, () => {
+          if (tokenURIs.includes(uris[1]) || thisGameNFTs.includes(uris[1]) || tokenURIs.includes("https://i.imgur.com/mV9ypxl.png")){
+              k.wait(1, () => {
               stormCharged = true
             })
+          }
+          else{
+            k.wait(3, () => {
+            stormCharged = true
+          })
+          }
         }
       })
 
